@@ -22,7 +22,7 @@ class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
 
-        num_features = dataset.num_features
+        num_features = dataset.num_features# node特征向量维度
         dim = 32
 
         nn1 = Sequential(Linear(num_features, dim), ReLU(), Linear(dim, dim))
@@ -46,7 +46,7 @@ class Net(torch.nn.Module):
         self.bn5 = torch.nn.BatchNorm1d(dim)
 
         self.fc1 = Linear(dim, dim)
-        self.fc2 = Linear(dim, dataset.num_classes)
+        self.fc2 = Linear(dim, dataset.num_classes)# 分类数
 
     def forward(self, x, edge_index, batch):
         x = F.relu(self.conv1(x, edge_index))
@@ -96,7 +96,7 @@ def test(loader):
     correct = 0
     for data in loader:
         data = data.to(device)
-        output = model(data.x, data.edge_index, data.batch)
+        output = model(data.x, data.edge_index, data.batch)# 每个data有128张图，输出1×128维向量，通过距离定义分类
         pred = output.max(dim=1)[1]
         correct += pred.eq(data.y).sum().item()
     return correct / len(loader.dataset)
