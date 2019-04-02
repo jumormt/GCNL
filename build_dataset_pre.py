@@ -1,6 +1,8 @@
 # https://blog.csdn.net/john_xyz/article/details/79208564
 from gensim.test.utils import common_texts
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+# import torch
+# from torch_geometric.data import Data
 inputpath = "/Users/chengxiao/Desktop/VulDeepecker/资料/project/CGDSymbolization/src/main/resources/result"
 
 # data.x: Node feature matrix with shape [num_nodes, num_node_features]
@@ -31,7 +33,7 @@ for dirpath,dirnames,filenames in os.walk(inputpath):
             edgeList = curjson["edges"]
             graphs[file] = dict()
             graphs[file]["target"] = target
-            graphs[file]["edgelist"] = edgeList
+            graphs[file]["edgeList"] = edgeList
             graphs[file]["nodeStrList"] = nodeStrList
 
 documents = list()
@@ -55,4 +57,15 @@ for graph in graphs:
         nodeVecList.append(model.docvecs[graph+"_tag"+str(i)])
     curGraph["nodeVecList"] = nodeVecList
 
-print(graphs)
+# Read data into huge `Data` list.
+data_list = list()
+for graphk in graphs:
+    curGraph = graphs[graphk]
+    edge_index_v = curGraph["edgeList"]
+    x_v = curGraph["nodeVecList"]
+    y = curGraph["target"]
+    # edge_index = torch.tensor(edge_index_v, dtype=torch.long)
+    # x = torch.tensor(x_v, dtype = torch.float)
+    # data = Data(x=x, edge_index=edge_index.t().contiguous(), y=y)
+    # data_list.append(data)
+    print()
