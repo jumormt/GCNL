@@ -43,7 +43,7 @@ for graph in graphs:
     nodes = curGraph["nodeStrList"]
     # curGraph["nodeTagList"] = list()
     for i in range(len(nodes)):
-        documents.append(TaggedDocument(nodes[i], [graph+"_tag"+str(i)]))
+        documents.append(TaggedDocument(nodes[i].split(), [graph+"_tag"+str(i)]))
         # curGraph["nodeTagList"].append(count)
         # count = count+1
 
