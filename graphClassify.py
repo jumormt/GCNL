@@ -18,11 +18,26 @@ import json
 import argparse
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_val_predict
+from sklearn import metrics
 from sklearn.model_selection import cross_val_score
+from sklearn.metrics.scorer import make_scorer
 from sklearn.metrics import recall_score
 from sklearn import svm
 import numpy as np
 from sklearn.model_selection import ShuffleSplit
+
+from collections import Counter
+from imblearn.over_sampling import SMOTE, ADASYN  # 过抽样处理库SMOTE
+from imblearn.under_sampling import RandomUnderSampler  # 欠抽样处理库RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler  # 欠抽样处理库RandomUnderSampler
+from imblearn.ensemble import EasyEnsemble  # 简单集成方法EasyEnsemble
+
+from imblearn.combine import SMOTEENN
+from imblearn.combine import SMOTETomek
+
+from sklearn import preprocessing
 
 
 def getGraphs(inputpath, inputCSVPath):
@@ -70,7 +85,7 @@ def getGraphs(inputpath, inputCSVPath):
 
 def getXY(graphs):
     '''
-
+    得到经过均衡处理后的xy，并对x进行预处理
     :param graphs: getGraph得到的图
     :return: X，Y-list
     '''
@@ -81,22 +96,71 @@ def getXY(graphs):
         X.append(graphs[graph]['x'])
         Y.append(graphs[graph]['target'])
 
-    return X, Y
+    X = np.array(X).astype('float64')
+    Y = np.array(Y)
+
+    # 结合采样
+    # https://blog.csdn.net/kizgel/article/details/78553009
+    smote_tomek = SMOTETomek(random_state=0)
+    X_resampled, y_resampled = smote_tomek.fit_sample(X, Y)
+    print(sorted(Counter(y_resampled).items()))
+
+    # 预处理 归一化正则化
+    scaler = preprocessing.StandardScaler().fit(X_resampled)
+    X_train_transformed = scaler.transform(X_resampled)
+
+    return X_train_transformed, y_resampled
+
+def svm_cross_validation(train_x, train_y):
+    '''
+    svm调参
+    :param train_x:
+    :param train_y:
+    :return:
+    '''
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.svm import SVC
+    model = SVC(kernel='rbf', probability=True)
+    param_grid = {'C': [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100, 1000, 10000], 'gamma': [0.01, 0.0001]}
+    grid_search = GridSearchCV(model, param_grid, n_jobs = 8, verbose=1)
+    grid_search.fit(train_x, train_y)
+    best_parameters = grid_search.best_estimator_.get_params()
+    for para, val in list(best_parameters.items()):
+        print(para, val)
+    model = SVC(kernel='rbf', C=best_parameters['C'], gamma=best_parameters['gamma'], probability=True)
+    # model.fit(train_x, train_y)
+    return model
 
 
 def main(args):
-
     graphs = getGraphs(args.input_json_path, args.input_csv_path)
     X, Y = getXY(graphs)
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1, random_state=0)
 
-    cv = ShuffleSplit(n_splits=5, test_size=0.1, random_state=0)
-    scoring = ['precision_macro', 'recall_macro']
-    clf = svm.SVC(kernel='linear', C=1, random_state=0)
-    scores = cross_val_score(clf, X, Y ,cv = cv)
+    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=0)
+    # scoring = ['precision_macro', 'recall_macro']
 
-    print()
+    # clf.fit(X_train, y_train)
+    # a = clf.predict(X_test)
+    # ros = RandomOverSampler(random_state=0)
+    # X_resampled, y_resampled = ros.fit_sample(X, Y)
+    # sorted(Counter(y_resampled).items())
+
+
+    clf = svm_cross_validation(X, Y)
+
+    scores = cross_val_score(clf, X, Y, cv=cv)
+    for i in range(len(scores)):
+        print("Accuracy%d: %0.5f" % (i, scores[i]))
+    print("Accuracy average: %0.5f (+/- %0.5f)" % (scores.mean(), scores.std() * 2))
+    # scores = cross_validate(clf, X, Y, scoring=scoring,
+    #                         cv=5, return_train_score=True)
+    # predicted = cross_val_predict(clf, X, Y, cv=10)
+
+    # print(metrics.accuracy_score(Y, predicted))
+
+    print("end")
 
 
 def parameter_parser():
@@ -114,17 +178,14 @@ def parameter_parser():
                         help="Input folder with jsons.")
     parser.add_argument("--input-csv-path",
                         nargs="?",
-                        default="/Users/chengxiao/Downloads/graph2vec-master/features/test3.csv",
+                        default="/Users/chengxiao/Downloads/graph2vec-master/features/test.csv",
                         help="Input csv file which contains graphvecs.")
     parser.add_argument("--epochs",
                         type=int,
                         default=10,
                         help="Number of epochs. Default is 10.")
 
-
-
     return parser.parse_args()
-
 
 
 if __name__ == '__main__':
