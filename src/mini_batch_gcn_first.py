@@ -6,16 +6,20 @@ from torch.nn import Sequential, Linear, ReLU
 from torch_geometric.datasets import TUDataset
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import GINConv, global_add_pool
+from dataset_build import Test787DatasetTest
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'MUTAG')
-dataset = TUDataset(path, name='MUTAG').shuffle()
+# dataset = TUDataset(path, name='MUTAG').shuffle()
+dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/Test787DatasetTest")
 test_dataset = dataset[:len(dataset) // 10]
 train_dataset = dataset[len(dataset) // 10:]
 test_loader = DataLoader(test_dataset, batch_size=128)
 train_loader = DataLoader(train_dataset, batch_size=128)
-
-for i in train_loader:
-    a = 1
+print("dataset.num_features ",dataset.num_features)
+print("dataset.num_classes ",dataset.num_classes)
+for ba in test_loader:
+    print(ba.num_graphs)
+    print(ba.y)
 
 
 class Net(torch.nn.Module):

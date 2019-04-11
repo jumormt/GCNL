@@ -3,7 +3,9 @@ from gensim.test.utils import common_texts
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 # import torch
 # from torch_geometric.data import Data
-inputpath = "/Users/chengxiao/Desktop/VulDeepecker/资料/project/CGDSymbolization/src/main/resources/result"
+# inputpath = "/Users/chengxiao/Desktop/VulDeepecker/资料/project/CGDSymbolization/src/main/resources/result"
+# inputpath = "/home/cry/chengxiao/dataset/SARD.2019-02-28-22-07-31/addswitch/result_sym"
+inputpath = "/Users/chengxiao/Downloads/SARD.2019-02-28-22-07-31/addswitch/result_sym"
 
 # data.x: Node feature matrix with shape [num_nodes, num_node_features]
 # data.edge_index: Graph connectivity in COO format with shape [2, num_edges] and type torch.long
