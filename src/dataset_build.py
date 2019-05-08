@@ -20,6 +20,7 @@ from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 import os
 import json
+import random
 
 
 class Test787DatasetTest(InMemoryDataset):
@@ -47,7 +48,11 @@ class Test787DatasetTest(InMemoryDataset):
         # import torch
         # from torch_geometric.data import Data
         # inputpath = "/Users/chengxiao/Desktop/VulDeepecker/资料/project/CGDSymbolization/src/main/resources/result"
-        inputpath = "/home/cry/chengxiao/dataset/SARD.2019-02-28-22-07-31/addswitch/result_sym"
+        # inputpath = "/home/cry/chengxiao/dataset/SARD.2019-02-28-22-07-31/noerror/cut-addapi/result_sym"
+        # inputpath = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/result_sym"
+        # inputpath = "/home/cry/chengxiao/dataset/tscanc/CWE-c-691/result_sym"
+        # inputpath = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/399/result_sym"
+        inputpath = "/home/cry/chengxiao/dataset/tscanc/CWE-c-691/result_sym"
 
         # data.x: Node feature matrix with shape [num_nodes, num_node_features]
         # data.edge_index: Graph connectivity in COO format with shape [2, num_edges] and type torch.long
@@ -91,8 +96,11 @@ class Test787DatasetTest(InMemoryDataset):
                 # curGraph["nodeTagList"].append(count)
                 # count = count+1
 
-        model = Doc2Vec(documents, vector_size=128, window=0, min_count=5, workers=4, dm=0, sample=0.0001, alpha=0.025,
-                        epochs=10)
+        # model = Doc2Vec(documents, vector_size=50, window=0, min_count=5, workers=4, dm=0, sample=0.0001, alpha=0.025,
+        #                 epochs=100)
+
+        model = Doc2Vec(documents, vector_size=100, min_count=5, workers=8, window=8, dm=0, alpha=0.025,
+                        epochs=100)
 
         for graph in graphs:
             curGraph = graphs[graph]
@@ -105,24 +113,49 @@ class Test787DatasetTest(InMemoryDataset):
 
         # Read data into huge `Data` list.
         data_list = list()
-        # from imblearn.combine import SMOTETomek
-        # from collections import Counter
-        #
-        # smote_tomek = SMOTETomek(random_state=0)
-        # X = list()
-        # Y = list()
-        # for graphk in graphs:
-        #     curGraph = graphs[graphk]
-        #     X.append([curGraph])
-        #     y = curGraph["target"]
-        #     Y.append(y)
-        # X_resampled, y_resampled = smote_tomek.fit_sample(X, Y)
-        # # X_resampled, y_resampled = X,Y
-        # print(sorted(Counter(y_resampled).items()))
 
+        # TODO:解决样本不平衡的问题
+        from imblearn.combine import SMOTETomek
+        from imblearn.over_sampling import RandomOverSampler
+        from collections import Counter
+
+        # smote_tomek = RandomOverSampler(random_state=0)
+        X = list()
+        Y = list()
+        X_0 = list()
+        X_1 = list()
         for graphk in graphs:
-        # for curGraph in X_resampled:
             curGraph = graphs[graphk]
+            # X.append(curGraph)
+            y = curGraph["target"]
+            if (y == 0):
+                X_0.append(curGraph)
+            else:
+                X_1.append(curGraph)
+        # num = abs(len(X_0) - len(X_1))
+        # if (len(X_0) > len(X_1)):
+        #     # 扩展x1
+        #
+        #     for i in range(num):
+        #         X_1.append(random.choice(X_1))
+        #
+        # else:
+        #     # 扩展x0
+        #     for i in range(num):
+        #         X_0.append(random.choice(X_0))
+
+        X.extend(X_0)
+        Y.extend(len(X_0) * [0])
+        X.extend(X_1)
+        Y.extend(len(X_1) * [1])
+
+        # X_resampled, y_resampled = smote_tomek.fit_sample(X, Y)
+        X_resampled, y_resampled = X,Y
+        print(sorted(Counter(y_resampled).items()))
+
+        # for graphk in graphs:
+        for curGraph in X_resampled:
+            # curGraph = graphs[graphk]
             # curGraph = curGraph[0]
             edge_index_v = curGraph["edgeList"]
 
@@ -139,6 +172,7 @@ class Test787DatasetTest(InMemoryDataset):
             # print(edge_index.t().contiguous())
             print(data)
             data_list.append(data)
+        random.shuffle(data_list)
 
         # edge_index = torch.tensor([[0, 1],
         #                            [1,2]
@@ -174,7 +208,7 @@ class Test787DatasetTest(InMemoryDataset):
 
 
 if __name__ == '__main__':
-    dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/Test787DatasetTest")
+    dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/691DatasetTest")
     loader = DataLoader(dataset, batch_size=2, shuffle=True)
     # for i in loader:
     #     b = 1

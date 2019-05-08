@@ -8,6 +8,16 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import GINConv, global_add_pool
 from dataset_build import Test787DatasetTest
 
+
+from torch_geometric.utils import f1_score
+from torch_geometric.utils import accuracy
+from torch_geometric.utils import true_positive
+from torch_geometric.utils import true_negative
+from torch_geometric.utils import false_positive
+from torch_geometric.utils import false_negative
+from torch_geometric.utils import precision
+from torch_geometric.utils import recall
+
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'MUTAG')
 # dataset = TUDataset(path, name='MUTAG').shuffle()
 dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/Test787DatasetTest")
@@ -17,9 +27,9 @@ test_loader = DataLoader(test_dataset, batch_size=128)
 train_loader = DataLoader(train_dataset, batch_size=128)
 print("dataset.num_features ",dataset.num_features)
 print("dataset.num_classes ",dataset.num_classes)
-for ba in test_loader:
-    print(ba.num_graphs)
-    print(ba.y)
+# for ba in test_loader:
+#     print(ba.num_graphs)
+#     print(ba.y)
 
 
 class Net(torch.nn.Module):
@@ -98,17 +108,35 @@ def test(loader):
     model.eval()
 
     correct = 0
+    flag = 0
+    preds = None
+    datays = None
     for data in loader:
         data = data.to(device)
         output = model(data.x, data.edge_index, data.batch)# 每个data有128张图，输出1×128维向量，通过距离定义分类
         pred = output.max(dim=1)[1]
         correct += pred.eq(data.y).sum().item()
+        # print("type pred:", type(pred), "type y: ", type(data.y))
+        if(flag == 0):
+            preds = pred
+            datays = data.y
+            flag = 1
+        else:
+            # print("preds ", preds.size())
+            # print("pred ", pred.size())
+            preds = torch.cat((preds, pred), 0)
+            datays = torch.cat((datays, data.y), 0)
+    print("f1socre: {}".format(f1_score(preds, datays, 2)))
+    print("true_positive: {}".format(true_positive(preds, datays, 2)))
+    print("accuracy: {}".format(accuracy(preds, datays)))
     return correct / len(loader.dataset)
 
 
 for epoch in range(1, 101):
     train_loss = train(epoch)
+    print("train:")
     train_acc = test(train_loader)
+    print("test:")
     test_acc = test(test_loader)
     print('Epoch: {:03d}, Train Loss: {:.7f}, '
           'Train Acc: {:.7f}, Test Acc: {:.7f}'.format(epoch, train_loss,
