@@ -52,7 +52,8 @@ class Test787DatasetTest(InMemoryDataset):
         # inputpath = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/result_sym"
         # inputpath = "/home/cry/chengxiao/dataset/tscanc/CWE-c-691/result_sym"
         # inputpath = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/399/result_sym"
-        inputpath = "/home/cry/chengxiao/dataset/tscanc/CWE-c-691/result_sym"
+        # inputpath = "/home/cry/chengxiao/dataset/tscanc/CWE-c-691/result_sym"
+        inputpath = "/home/cry/chengxiao/dataset/notpre/CWE-840/notpre_result_sym"
 
         # data.x: Node feature matrix with shape [num_nodes, num_node_features]
         # data.edge_index: Graph connectivity in COO format with shape [2, num_edges] and type torch.long
@@ -208,7 +209,7 @@ class Test787DatasetTest(InMemoryDataset):
 
 
 if __name__ == '__main__':
-    dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/691DatasetTest")
+    dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/notpre840DatasetTest")
     loader = DataLoader(dataset, batch_size=2, shuffle=True)
     # for i in loader:
     #     b = 1

@@ -24,12 +24,12 @@ from sklearn.model_selection import KFold
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-file_handler = logging.FileHandler(
-    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119f_tk_result.txt')
-file_handler.setLevel(level=logging.INFO)
+# file_handler = logging.FileHandler(
+#     '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119f_tk_result.txt')
+# file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+# file_handler.setFormatter(formatter)
+# logger.addHandler(file_handler)
 
 # StreamHandler
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -38,9 +38,9 @@ stream_handler.setLevel(level=logging.INFO)
 logger.addHandler(stream_handler)
 
 jsonPath = "/Users/chengxiao/Downloads/CWE-691/token_sym/airpcap_loader.c.exm_0_funcline113_sym.json"
-# jsonDir = "/Users/chengxiao/Downloads/CWE-691/token_sym/"
+jsonDir = "/Users/chengxiao/Downloads/CWE-691/token_sym/"
 # jsonDir = "/home/cry/chengxiao/dataset/tscanc/CWE-417/token_sym/"
-jsonDir = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/119/token_sym/"
+# jsonDir = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/119/token_sym/"
 
 # 全局变量
 batch_size = 60
@@ -242,6 +242,7 @@ def main():
         model.fit(X_train, Y_train, batch_size=64, epochs=50, verbose=2)
 
         y_result = model.predict_classes(X_test)
+        y_result_prob = model.predict_proba(X_test)
         # print('f1: %.8f' % metrics.f1_score(y_test, y_result))
         TP = 0
         TN = 0
@@ -274,7 +275,8 @@ def main():
 
         accuracy = metrics.accuracy_score(Y_test, y_result)
         logger.info("accuracy: {}".format(accuracy))
-        AUC = metrics.roc_auc_score(Y_test, y_result)
+        # AUC = metrics.roc_auc_score(Y_test, y_result)
+        AUC = metrics.roc_auc_score(Y_test, y_result_prob)
         logger.info('AUC: %.8f' % AUC)
         tprList.append(TPR)
         fprList.append(FPR)

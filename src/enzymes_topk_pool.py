@@ -29,7 +29,7 @@ from sklearn.model_selection import KFold
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 file_handler = logging.FileHandler(
-    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/399f_result.txt')
+    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/840_result.txt')
 file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
@@ -43,12 +43,12 @@ logger.addHandler(stream_handler)
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ENZYMES')
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/21DatasetTest")
-# dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/840DatasetTest")
+dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/840DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/Test691DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/BehaviorDatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/119DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/691DatasetTest")
-dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/399DatasetTest")
+# dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/notpre840DatasetTest")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -91,7 +91,8 @@ class Net(torch.nn.Module):
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=0.5, training=self.training)
         x = F.relu(self.lin2(x))
-        x = F.log_softmax(self.lin3(x), dim=-1)
+        # x = F.log_softmax(self.lin3(x), dim=-1)
+        x = F.softmax(self.lin3(x), dim=-1)
 
         return x
 
@@ -118,21 +119,27 @@ def test(loader, model):
     flag = 0
     preds = None
     datays = None
+    probs = None
     correct = 0
     for data in loader:
         data = data.to(device)
-        pred = model(data).max(dim=1)[1]
+        prob ,pred = model(data).max(dim=1)
+        # pred_score = model(data).max(dim=1)[1]
+        # print("pred: ", pred)
+        # print("pred_score: ", pred_score)
         # output = model(data.x, data.edge_index, data.batch)  # 每个data有128张图，输出1×128维向量，通过距离定义分类
         # pred = output.max(dim=1)[1]
 
         correct += pred.eq(data.y).sum().item()
         if (flag == 0):
+            probs = prob
             preds = pred
             datays = data.y
             flag = 1
         else:
             # print("preds ", preds.size())
             # print("pred ", pred.size())
+            probs = torch.cat((probs, prob), 0)
             preds = torch.cat((preds, pred), 0)
             datays = torch.cat((datays, data.y), 0)
     # logger.info("f1socre: {}".format(f1_score(preds, datays, 2)))
@@ -159,7 +166,8 @@ def test(loader, model):
     # print('AUC: %.8f' % metrics.roc_auc_score(preds.cpu(), datays.cpu()))
     # prauc = metrics.precision_recall_curve(datays.cpu(), preds.cpu())
     # logger.info('pr auc: %.8f' % prauc)
-    curauc = metrics.roc_auc_score(datays.cpu(), preds.cpu())
+    # curauc = metrics.roc_auc_score(datays.cpu(), preds.cpu())
+    curauc = metrics.roc_auc_score(datays.cpu(), probs.cpu())
     logger.info('AUC: %.8f' % curauc)
 
 
