@@ -24,12 +24,12 @@ from sklearn.model_selection import KFold
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-# file_handler = logging.FileHandler(
-#     '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119f_tk_result.txt')
-# file_handler.setLevel(level=logging.INFO)
+file_handler = logging.FileHandler(
+    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119_tk_result.txt')
+file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# file_handler.setFormatter(formatter)
-# logger.addHandler(file_handler)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 # StreamHandler
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -38,9 +38,9 @@ stream_handler.setLevel(level=logging.INFO)
 logger.addHandler(stream_handler)
 
 jsonPath = "/Users/chengxiao/Downloads/CWE-691/token_sym/airpcap_loader.c.exm_0_funcline113_sym.json"
-jsonDir = "/Users/chengxiao/Downloads/CWE-691/token_sym/"
-# jsonDir = "/home/cry/chengxiao/dataset/tscanc/CWE-417/token_sym/"
-# jsonDir = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/119/token_sym/"
+# jsonDir = "/Users/chengxiao/Downloads/CWE-840/token_sym/"
+# jsonDir = "/home/cry/chengxiao/dataset/tscanc/CWE-21/token_sym/"
+jsonDir = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/119/token_sym/"
 
 # 全局变量
 batch_size = 60
@@ -268,7 +268,7 @@ def main():
         if (TP + FP != 0):
             P = round(TP / (TP + FP), 10)
             plist.append(P)
-            # logger.info("Precision:{}".format(P))
+            logger.info("Precision:{}".format(P))
             f1 = round(2 * P * TPR / (P + TPR), 10)
             logger.info("f1: {}".format(f1))
             f1List.append(f1)
@@ -290,7 +290,7 @@ def main():
     logger.info("fnr: {}".format(np.mean(fnrList)))
     logger.info("accuracy: {}".format(np.mean(accuracyList)))
     logger.info("f1: {}".format(np.mean(f1List)))
-    # logger.info("Precision: {}".format(np.mean(plist)))
+    logger.info("Precision: {}".format(np.mean(plist)))
     logger.info("AUC: {}".format(np.mean(AUCList)))
 
     print("end")

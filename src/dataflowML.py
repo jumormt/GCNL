@@ -22,12 +22,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-# file_handler = logging.FileHandler(
-#     '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119_df_result.txt')
-# file_handler.setLevel(level=logging.INFO)
+file_handler = logging.FileHandler(
+    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119_df_result.txt')
+file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# file_handler.setFormatter(formatter)
-# logger.addHandler(file_handler)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 # StreamHandler
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -309,10 +309,10 @@ def main():
     # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/840_sym.txt"
     # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/sard_beha.txt"
     # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/sard_399.txt"
-    # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/cwe119_cgd_result.txt"
+    datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/cwe119_cgd_result.txt"
     # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/sard_21.txt"
     # datapath = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/sard_691.txt"
-    datapath = u"/Users/chengxiao/Downloads/CWE-691/sard_sym.txt"
+    # datapath = u"/Users/chengxiao/Downloads/CWE-691/sard_sym.txt"
     sentences = LineSentence(datapath)
 
     fileVec = []  # codeGadget的tokenlist集合 [cg1,cg2,...] cg1:[tk1, tk2, ...]
@@ -390,8 +390,8 @@ def main():
 
     # 训练模型------------------------------------
     logger.info('训练word2vec模型中...'.encode('utf-8'))
-    outpm = u"/Users/chengxiao/Desktop/VulDeepecker/ml/resource/model/word2vec_1102_test.model"
-    # outpm = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/model/word2vec_1102_test.model"
+    # outpm = u"/Users/chengxiao/Desktop/VulDeepecker/ml/resource/model/word2vec_1102_test.model"
+    outpm = u"/home/cry/chengxiao/dataset/VulDeepeckerDB/model/word2vec_1102_test.model"
     model = Word2Vec(sentences, min_count=0, size=1)
     logger.info('词袋模型训练成功！'.encode('utf-8'))
     model.save(outpm)
@@ -424,11 +424,11 @@ def main():
         fileIntVec.append(cdgInts)
 
     fixVec(fileIntVec, model, info, MAX_SENTENCE_LENGTH, 1)
-    for i in range(1, 6):
-        print(i)
-        print(fileVec[i])
-        print(fileIntVec[i])
-        sys.stdout.flush()
+    # for i in range(1, 6):
+    #     print(i)
+    #     print(fileVec[i])
+    #     print(fileIntVec[i])
+    #     sys.stdout.flush()
     logger.info('构建向量数据库成功！'.encode('utf-8'))
     # ----------------------
 
@@ -490,8 +490,8 @@ def main():
         y_result = blstmCgdModel.predict_classes(x_test)
         y_result_prob = blstmCgdModel.predict_proba(x_test)
 
-        print("y_result: ", y_result)
-        print("y_result_prob", y_result_prob)
+        # print("y_result: ", y_result)
+        # print("y_result_prob", y_result_prob)
         # print('f1: %.8f' % metrics.f1_score(y_test, y_result))
         TP = 0
         TN = 0
@@ -516,7 +516,7 @@ def main():
         logger.info("fnr: {}".format(FNR))
         if (TP + FP != 0):
             P = round(TP / (TP + FP), 10)
-            # logger.info("precision: {}".format(P))
+            logger.info("precision: {}".format(P))
             plist.append(P)
             f1 = round(2 * P * TPR / (P + TPR), 10)
             logger.info("f1: {}".format(f1))
@@ -540,12 +540,13 @@ def main():
         # print(y_result)
         # logger.info(metricss)
 
+    logger.info("119 dataflow:")
     logger.info("tpr: {}".format(np.mean(tprList)))
     logger.info("fpr: {}".format(np.mean(fprList)))
     logger.info("fnr: {}".format(np.mean(fnrList)))
     logger.info("accuracy: {}".format(np.mean(accuracyList)))
     logger.info("f1: {}".format(np.mean(f1List)))
-    # logger.info("precision: {}".format(np.mean(plist)))
+    logger.info("precision: {}".format(np.mean(plist)))
     logger.info("AUC: {}".format(np.mean(AUCList)))
 
     print("end")
