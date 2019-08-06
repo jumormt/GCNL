@@ -25,7 +25,7 @@ from sklearn.model_selection import KFold
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 file_handler = logging.FileHandler(
-    '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119_tk_result.txt')
+    '/home/cry/chengxiao/dataset/svf-related/CWE476/476_tk_result.txt')
 file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
@@ -40,7 +40,7 @@ logger.addHandler(stream_handler)
 jsonPath = "/Users/chengxiao/Downloads/CWE-691/token_sym/airpcap_loader.c.exm_0_funcline113_sym.json"
 # jsonDir = "/Users/chengxiao/Downloads/CWE-840/token_sym/"
 # jsonDir = "/home/cry/chengxiao/dataset/tscanc/CWE-21/token_sym/"
-jsonDir = "/home/cry/chengxiao/dataset/tscanc/SARD_119_399/119/token_sym/"
+jsonDir = "/home/cry/chengxiao/dataset/svf-related/CWE476/token-sym/"
 
 # 全局变量
 batch_size = 60
