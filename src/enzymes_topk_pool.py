@@ -28,12 +28,12 @@ from sklearn.model_selection import KFold
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-# file_handler = logging.FileHandler(
-#     '/home/cry/chengxiao/dataset/tscanc/SARD_119_399/result/log/119_result.txt')
-# file_handler.setLevel(level=logging.INFO)
+file_handler = logging.FileHandler(
+    '/home/cry/chengxiao/dataset/tscanc/691_result.txt')
+file_handler.setLevel(level=logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# file_handler.setFormatter(formatter)
-# logger.addHandler(file_handler)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 # StreamHandler
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -47,9 +47,9 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ENZYMES')
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/417DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/840DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/Test691DatasetTest")
-dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/BehaviorDatasetTest")
+# dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/BehaviorDatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/119DatasetTest")
-# dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/691DatasetTest")
+dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/691DatasetTest")
 # dataset = Test787DatasetTest(root="/home/cry/chengxiao/dataset/notpre840DatasetTest")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -191,6 +191,30 @@ class Net(torch.nn.Module):
 
         return x
 
+def buildKFoldDataset(k, dataset):
+    '''k-fold validation for pytorch_geometric dataset
+
+    :param k:
+    :param dataset:
+    :return:
+    '''
+    train_dataset_list = list()
+    test_dataset_list = list()
+
+    n = len(dataset) // k
+    for i in range(k):
+        if i == 0:
+            test_dataset = dataset[:n]
+            train_dataset = dataset[n:]
+        elif i == k - 1:
+            test_dataset = dataset[(k - 1) * n:]
+            train_dataset = dataset[:(k - 1) * n]
+        else:
+            test_dataset = dataset[i * n:(i + 1) * n]
+            train_dataset = dataset[:i * n] + dataset[(i + 1) * n:]
+        train_dataset_list.append(train_dataset)
+        test_dataset_list.append(test_dataset)
+    return train_dataset_list, test_dataset_list
 
 def train(epoch, model, train_loader, optimizer, train_dataset):
     model.train()
@@ -280,33 +304,7 @@ def test(loader, model):
 
 def main():
     # dataset = dataset.shuffle()
-    n = len(dataset) // 5
-    train_dataset_list = list()
-    test_dataset_list = list()
-    test_dataset = dataset[:n]
-    train_dataset = dataset[n:]
-    test_dataset_list.append(test_dataset)
-    train_dataset_list.append(train_dataset)
-
-    test_dataset = dataset[n:2 * n]
-    train_dataset = dataset[:n] + dataset[2 * n:]
-    test_dataset_list.append(test_dataset)
-    train_dataset_list.append(train_dataset)
-
-    test_dataset = dataset[2*n:3*n]
-    train_dataset = dataset[:2*n]+dataset[3*n:]
-    test_dataset_list.append(test_dataset)
-    train_dataset_list.append(train_dataset)
-
-    test_dataset = dataset[3*n:4*n]
-    train_dataset = dataset[:3*n]+dataset[4*n:]
-    test_dataset_list.append(test_dataset)
-    train_dataset_list.append(train_dataset)
-
-    test_dataset = dataset[4*n:]
-    train_dataset = dataset[:4*n]
-    test_dataset_list.append(test_dataset)
-    train_dataset_list.append(train_dataset)
+    train_dataset_list, test_dataset_list = buildKFoldDataset(10, dataset)
 
     aucList = list()
     accList = list()
@@ -314,9 +312,11 @@ def main():
     fnrList = list()
     plist = list()
     f1list = list()
+    allResult=list()
     kfcount = 1
-    for idx in range(5):
+    for idx in range(10):
         logger.info("kfcount: {}".format(kfcount))
+        kfresult = dict()
         kfcount = kfcount + 1
         train_dataset = train_dataset_list[idx]
         test_dataset = test_dataset_list[idx]
@@ -338,10 +338,18 @@ def main():
         for epoch in range(1, 51):
             logger.info("Epoch: {:03d}------------>start".format(epoch))
             loss, model, optimizer = train(epoch, model, train_loader, optimizer, train_dataset)
-            logger.info("train---------------:")
-            train_acc, trauc, trfpr, trf1, trfnr, trp, model = test(train_loader, model)
+            # logger.info("train---------------:")
+            # train_acc, trauc, trfpr, trf1, trfnr, trp, model = test(train_loader, model)
             logger.info("test--------------:")
             test_acc, teauc, tefpr, tef1, tefnr, tep, model = test(test_loader, model)
+            kfresult[epoch] = dict()
+            kfresult[epoch]["acc"] = test_acc
+            kfresult[epoch]["auc"] = teauc
+            kfresult[epoch]["fpr"] = tefpr
+            kfresult[epoch]["f1"] = tef1
+            kfresult[epoch]["fnr"] = tefnr
+            kfresult[epoch]["p"] = tep
+            kfresult[epoch]["loss"] = loss
             if (best_f1 < tef1):
                 best_auc = teauc
                 best_fpr = tefpr
@@ -359,8 +367,9 @@ def main():
             #     best_fnr = tefnr
             # if(best_fpr>tefpr):
             #     best_fpr = tefpr
-            logger.info('Epoch: {:03d}, Loss: {:.5f}, Train Acc: {:.5f}, Test Acc: {:.5f}'.
-                        format(epoch, loss, train_acc, test_acc))
+            logger.info('Epoch: {:03d}, Loss: {:.5f}, Test Acc: {:.5f}, Test f1 : {}'.
+                        format(epoch, loss, test_acc, tef1))
+        allResult.append(kfresult)
         logger.info('best auc: {}'.format(best_auc))
         logger.info('best f1: {}'.format(best_f1))
         logger.info('best fnr: {}'.format(best_fnr))  # 漏报率
@@ -368,13 +377,32 @@ def main():
         logger.info('best fpr: {}'.format(best_fpr))
         logger.info('best acc: {}'.format(best_acc))
         logger.info('best Precision: {}'.format(best_p))
-        aucList.append(best_auc)
-        fnrList.append(best_fnr)
-        fprList.append(best_fpr)
-        accList.append(best_acc)
-        plist.append(best_p)
-        f1list.append(best_f1)
-    logger.info("119 cfg result: ")
+        # aucList.append(best_auc)
+        # fnrList.append(best_fnr)
+        # fprList.append(best_fpr)
+        # accList.append(best_acc)
+        # plist.append(best_p)
+        # f1list.append(best_f1)
+    best_epoch = 1
+    best_f1 = 0
+    for epoch in range(1, 50 + 1):
+        f1listtmp = list()
+        for idx in range(len(allResult)):
+            f1listtmp.append(allResult[idx][epoch]["f1"])
+        f1 = np.mean(f1listtmp)
+        if f1 > best_f1:
+            best_f1 = f1
+            best_epoch = epoch
+    logger.info('final best epoch: {}'.format(best_epoch))
+    for kfcoutn in allResult:
+        f1list.append(kfcoutn[best_epoch]["f1"])
+        aucList.append(kfcoutn[best_epoch]["auc"])
+        fnrList.append(kfcoutn[best_epoch]["fnr"])
+        fprList.append(kfcoutn[best_epoch]["fpr"])
+        accList.append(kfcoutn[best_epoch]["acc"])
+        plist.append(kfcoutn[best_epoch]["p"])
+
+    logger.info("691 cfg result: ")
     logger.info('auc: {}'.format(np.mean(aucList)))
     logger.info('f1: {}'.format(np.mean(f1list)))
     logger.info('fnr: {}'.format(np.mean(fnrList)))  # 漏报率
